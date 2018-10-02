@@ -9,6 +9,7 @@ module "container" {
   assign_public_ip = "false"
   aws_security_group_id = "${var.aws_security_group_id}"
   aws_subnet_ids = ["${var.aws_subnet_ids}"]
+  enabled        = "true"
 
   # Be carefull to select compatible values
   # https://medium.com/prodopsio/deploying-fargate-services-using-cloudformation-the-guide-i-wish-i-had-d89b6dc62303
