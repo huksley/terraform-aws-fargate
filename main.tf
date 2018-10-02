@@ -84,7 +84,7 @@ resource "aws_iam_role_policy_attachment" "ecs_tasks_execution_role" {
 }
 
 resource "aws_ecs_service" "service_no_lb" {
-  count           = "${var.enabled == "true" ? 1 - signum(length(var.aws_alb_target_group_id)) : 0}"
+  count           = "${var.enabled == "true" && var.aws_alb_target_group_id == "" ? 1 : 0}"
   name            = "${var.prefix}-ecs"
   cluster         = "${aws_ecs_cluster.main.id}"
   task_definition = "${aws_ecs_task_definition.app.arn}"
@@ -99,7 +99,7 @@ resource "aws_ecs_service" "service_no_lb" {
 }
 
 resource "aws_ecs_service" "service_lb" {
-  count           = "${var.enabled == "true" ? signum(length(var.aws_alb_target_group_id)) : 0}"
+  count           = "${var.enabled == "true" && var.aws_alb_target_group_id != "" ? 1 : 0}"
   name            = "${var.prefix}-ecs"
   cluster         = "${aws_ecs_cluster.main.id}"
   task_definition = "${aws_ecs_task_definition.app.arn}"
