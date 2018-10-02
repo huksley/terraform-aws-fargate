@@ -28,7 +28,7 @@ resource "aws_ecs_task_definition" "app" {
   cpu                      = "${var.fargate_cpu}"
   memory                   = "${var.fargate_memory}"
   task_role_arn            = "${var.task_role}"
-  execution_role_arn       = "${length(var.execution_role) != 0 ? var.execution_role : join("", aws_iam_role.ecs_tasks_execution_role.*.arn)}"
+  execution_role_arn       = "${var.execution_role != "" ? var.execution_role : join("", aws_iam_role.ecs_tasks_execution_role.*.arn)}"
 
   container_definitions = <<DEFINITION
 [
@@ -72,19 +72,19 @@ data "aws_iam_policy_document" "ecs_tasks_execution_role" {
 }
 
 resource "aws_iam_role" "ecs_tasks_execution_role" {
-  count              = "${var.enabled == "true" && length(var.execution_role) == 0 ? 1 : 0}"
+  count              = "${(var.enabled == "true" && var.execution_role == "") ? 1 : 0}"
   name               = "${var.prefix}-ecs-task-execution-role"
   assume_role_policy = "${data.aws_iam_policy_document.ecs_tasks_execution_role.json}"
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_tasks_execution_role" {
-  count      = "${var.enabled == "true" && length(var.execution_role) == 0 ? 1: 0}"
+  count      = "${(var.enabled == "true" && var.execution_role == "") ? 1: 0}"
   role       = "${aws_iam_role.ecs_tasks_execution_role.name}"
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 resource "aws_ecs_service" "service_no_lb" {
-  count           = "${var.enabled == "true" && length(var.aws_alb_target_group_id) == 0 ? 1: 0}"
+  count           = "${(var.enabled == "true" && var.aws_alb_target_group_id == "") ? 1: 0}"
   name            = "${var.prefix}-ecs"
   cluster         = "${aws_ecs_cluster.main.id}"
   task_definition = "${aws_ecs_task_definition.app.arn}"
@@ -99,7 +99,7 @@ resource "aws_ecs_service" "service_no_lb" {
 }
 
 resource "aws_ecs_service" "service_lb" {
-  count           = "${var.enabled == "true" && length(var.aws_alb_target_group_id) != 0 ? 1: 0}"
+  count           = "${(var.enabled == "true" && var.aws_alb_target_group_id != "") ? 1: 0}"
   name            = "${var.prefix}-ecs"
   cluster         = "${aws_ecs_cluster.main.id}"
   task_definition = "${aws_ecs_task_definition.app.arn}"
